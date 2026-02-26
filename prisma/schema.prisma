@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  name           String
+  password       String
+  boardMembers   BoardMember[]
+  assignedTasks  TaskAssignee[]
+  activities     ActivityLog[]
+}
+
+model Board {
+  id          String         @id @default(uuid())
+  title       String
+  description String?
+  lists       List[]
+  members     BoardMember[]
+  activities  ActivityLog[]
+  createdAt   DateTime       @default(now())
+}
+
+model BoardMember {
+  boardId String
+  userId  String
+  role    Role     @default(MEMBER)
+  board   Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, userId]) // Composite primary key
+}
+
+model List {
+  id      String  @id @default(uuid())
+  title   String
+  order   Int     // Untuk urutan drag & drop
+  boardId String
+  board   Board   @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+}
+
+model Task {
+  id          String         @id @default(uuid())
+  title       String
+  description String?
+  priority    Priority       @default(LOW)
+  dueDate     DateTime?
+  order       Int            // Untuk urutan drag & drop
+  listId      String
+  list        List           @relation(fields: [listId], references: [id], onDelete: Cascade)
+  assignees   TaskAssignee[]
+}
+
+model TaskAssignee {
+  taskId String
+  userId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  boardId   String
+  userId    String
+  action    String
+  createdAt DateTime @default(now())
+
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ... Enum untuk Role dan Priority
+enum Role {
+  ADMIN
+  MANAGER
+  MEMBER
+  VIEWER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
