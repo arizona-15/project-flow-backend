@@ -24,7 +24,13 @@ export class BoardsService {
       include: {
         lists: {
           include: {
-            tasks: true,
+            tasks: {
+              include: {
+                assignees: {
+                  include: { user: true },
+                },
+              },
+            },
           },
         },
         members: {
