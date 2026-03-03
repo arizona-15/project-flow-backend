@@ -5,9 +5,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { BoardsModule } from './boards/boards.module';
 import { ListsModule } from './lists/lists.module';
 import { TasksModule } from './tasks/tasks.module';
+import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 
 @Module({
-  imports: [PrismaModule, BoardsModule, ListsModule, TasksModule],
+  imports: [PrismaModule, BoardsModule, ListsModule, TasksModule, ActivityLogsModule],
   controllers: [AppController],
   providers: [AppService],
 })

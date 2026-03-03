@@ -32,11 +32,19 @@ export class TasksService {
   }
 
   update(id: string, updateTaskDto: UpdateTaskDto) {
-    return `This action updates a #${id} task`;
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        ...updateTaskDto,
+        ...(updateTaskDto.dueDate && {
+          dueDate: new Date(updateTaskDto.dueDate),
+        }),
+      },
+    });
   }
 
-  remove(id: string) {
-    return `This action removes a #${id} task`;
+  async remove(id: string) {
+    return this.prisma.task.delete({ where: { id } });
   }
 
   async reorder(tasks: { id: string; listId: string; order: number }[]) {

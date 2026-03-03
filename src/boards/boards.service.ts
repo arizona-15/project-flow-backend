@@ -38,6 +38,12 @@ export class BoardsService {
             user: true,
           },
         },
+        activities: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: true,
+          },
+        },
       },
     });
   }
