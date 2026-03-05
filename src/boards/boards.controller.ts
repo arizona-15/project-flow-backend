@@ -55,4 +55,19 @@ export class BoardsController {
   remove(@Param('id') id: string) {
     return this.boardsService.remove(id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/available-users')
+  getAvailableUsers(@Param('id') id: string) {
+    return this.boardsService.getAvailableUsers(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/members')
+  addMember(
+    @Param('id') id: string,
+    @Body() body: { userId: string; role: string },
+  ) {
+    return this.boardsService.addMember(id, body.userId, body.role);
+  }
 }

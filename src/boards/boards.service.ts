@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class BoardsService {
@@ -92,6 +93,46 @@ export class BoardsService {
   remove(id: string) {
     return this.prisma.board.delete({
       where: { id },
+    });
+  }
+
+  async getAvailableUsers(boardId: string) {
+    const existingMembers = await this.prisma.boardMember.findMany({
+      where: { boardId },
+    });
+
+    const memberIds = existingMembers.map((m) => m.userId);
+
+    return this.prisma.user.findMany({
+      where: {
+        id: { notIn: memberIds },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+  }
+
+  async addMember(boardId: string, userId: string, role: string) {
+    const existing = await this.prisma.boardMember.findFirst({
+      where: { boardId, userId },
+    });
+
+    if (existing) {
+      throw new BadRequestException('User is already a member of this board');
+    }
+
+    return this.prisma.boardMember.create({
+      data: {
+        boardId,
+        userId,
+        role: role.toUpperCase() as Role,
+      },
+      include: {
+        user: true,
+      },
     });
   }
 }
