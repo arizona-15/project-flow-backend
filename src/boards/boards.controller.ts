@@ -6,23 +6,39 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Request as ExpressRequest } from 'express';
+
+interface RequestWithUser extends ExpressRequest {
+  user: {
+    id: string;
+    email: string;
+  };
+}
 
 @Controller('boards')
 export class BoardsController {
   constructor(private readonly boardsService: BoardsService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createBoardDto: CreateBoardDto) {
-    return this.boardsService.create(createBoardDto);
+  create(
+    @Body() createBoardDto: CreateBoardDto,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.boardsService.create(createBoardDto, req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.boardsService.findAll();
+  findAll(@Request() req: RequestWithUser) {
+    return this.boardsService.findAll(req.user.id);
   }
 
   @Get(':id')

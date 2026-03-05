@@ -5,4 +5,5 @@ export class CreateTaskDto {
   order: number;
   priority?: 'LOW' | 'MEDIUM' | 'HIGH';
   dueDate?: string;
+  assignees?: string[];
 }

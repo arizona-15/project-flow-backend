@@ -7,41 +7,49 @@ import { PrismaService } from '../prisma/prisma.service';
 export class BoardsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createBoardDto: CreateBoardDto) {
+  async create(createBoardDto: CreateBoardDto, userId: string) {
     return this.prisma.board.create({
       data: {
         title: createBoardDto.title,
         description: createBoardDto.description,
+        members: {
+          create: {
+            userId: userId,
+            role: 'ADMIN',
+          },
+        },
+      },
+      include: {
+        members: {
+          include: { user: true },
+        },
       },
     });
   }
 
-  async findAll() {
+  async findAll(userId: string) {
     return this.prisma.board.findMany({
+      where: {
+        members: {
+          some: {
+            userId: userId,
+          },
+        },
+      },
       orderBy: {
         createdAt: 'desc',
       },
       include: {
+        members: {
+          include: { user: true },
+        },
         lists: {
           include: {
             tasks: {
               include: {
-                assignees: {
-                  include: { user: true },
-                },
+                assignees: { include: { user: true } },
               },
             },
-          },
-        },
-        members: {
-          include: {
-            user: true,
-          },
-        },
-        activities: {
-          orderBy: { createdAt: 'desc' },
-          include: {
-            user: true,
           },
         },
       },
@@ -52,11 +60,12 @@ export class BoardsService {
     return this.prisma.board.findUnique({
       where: { id },
       include: {
+        members: {
+          include: { user: true },
+        },
         lists: {
-          orderBy: { order: 'asc' },
           include: {
             tasks: {
-              orderBy: { order: 'asc' },
               include: {
                 assignees: {
                   include: { user: true },
@@ -65,7 +74,6 @@ export class BoardsService {
             },
           },
         },
-        members: { include: { user: true } },
         activities: {
           orderBy: { createdAt: 'desc' },
           include: { user: true },
