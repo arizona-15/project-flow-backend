@@ -83,7 +83,6 @@ enum Role {
   ADMIN
   MANAGER
   MEMBER
-  VIEWER
 }
 
 enum Priority {
