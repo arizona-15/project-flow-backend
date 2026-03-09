@@ -83,6 +83,22 @@ export class BoardsService {
     });
   }
 
+  async findAllGlobal() {
+    return this.prisma.board.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        members: {
+          include: { user: true },
+        },
+        lists: {
+          include: {
+            tasks: true,
+          },
+        },
+      },
+    });
+  }
+
   update(id: string, updateBoardDto: UpdateBoardDto) {
     return this.prisma.board.update({
       where: { id },

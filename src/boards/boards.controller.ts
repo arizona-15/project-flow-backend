@@ -7,7 +7,9 @@ import {
   Param,
   Delete,
   UseGuards,
-  Request,
+  Req,
+  ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
@@ -18,26 +20,58 @@ import { Request as ExpressRequest } from 'express';
 interface RequestWithUser extends ExpressRequest {
   user: {
     id: string;
+    sub?: string;
     email: string;
+    role: string;
   };
 }
 
+@UseGuards(JwtAuthGuard)
 @Controller('boards')
 export class BoardsController {
   constructor(private readonly boardsService: BoardsService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @Get('admin/all')
+  async findAllGlobalBoards(@Req() req: RequestWithUser) {
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Invalid token payload');
+
+    if (req.user?.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'Access denied. Only Global Admins can view all system boards.',
+      );
+    }
+
+    return this.boardsService.findAllGlobal();
+  }
+
+  @Delete('admin/:id')
+  async deleteGlobalBoard(
+    @Req() req: RequestWithUser,
+    @Param('id') boardId: string,
+  ) {
+    const userId = req.user?.id || req.user?.sub;
+    if (!userId) throw new UnauthorizedException('Invalid token payload');
+
+    if (req.user?.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'Access denied. Only Global Admins can delete system boards.',
+      );
+    }
+
+    return this.boardsService.remove(boardId);
+  }
+
   @Post()
   create(
     @Body() createBoardDto: CreateBoardDto,
-    @Request() req: RequestWithUser,
+    @Req() req: RequestWithUser,
   ) {
     return this.boardsService.create(createBoardDto, req.user.id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Request() req: RequestWithUser) {
+  findAll(@Req() req: RequestWithUser) {
     return this.boardsService.findAll(req.user.id);
   }
 
@@ -56,13 +90,11 @@ export class BoardsController {
     return this.boardsService.remove(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id/available-users')
   getAvailableUsers(@Param('id') id: string) {
     return this.boardsService.getAvailableUsers(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':id/members')
   addMember(
     @Param('id') id: string,
