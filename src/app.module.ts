@@ -7,9 +7,10 @@ import { ListsModule } from './lists/lists.module';
 import { TasksModule } from './tasks/tasks.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [PrismaModule, BoardsModule, ListsModule, TasksModule, ActivityLogsModule, AuthModule],
+  imports: [PrismaModule, BoardsModule, ListsModule, TasksModule, ActivityLogsModule, AuthModule, UsersModule],
   controllers: [AppController],
   providers: [AppService],
 })
