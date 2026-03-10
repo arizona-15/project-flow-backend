@@ -28,12 +28,26 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard)
+  @Get('admin/logs')
+  async getSystemLogs(@Req() req: RequestWithUser) {
+    const adminId = req.user?.id || req.user?.sub;
+    if (!adminId) throw new UnauthorizedException('Invalid token');
+
+    const currentUser = await this.usersService.findById(String(adminId));
+    if (!currentUser || currentUser.role !== 'ADMIN') {
+      throw new ForbiddenException(
+        'Access denied. Only Global Admins can view system logs.',
+      );
+    }
+
+    return this.usersService.getSystemLogs();
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get()
   async findAll(@Req() req: RequestWithUser) {
     const userId = req.user?.id || req.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException('Invalid token payload');
-    }
+    if (!userId) throw new UnauthorizedException('Invalid token');
 
     const currentUser = await this.usersService.findById(String(userId));
     if (!currentUser || currentUser.role !== 'ADMIN') {
@@ -52,37 +66,33 @@ export class UsersController {
     @Param('id') targetId: string,
     @Body('role') role: string,
   ) {
-    const userId = req.user?.id || req.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException('Invalid token payload');
-    }
+    const adminId = req.user?.id || req.user?.sub;
+    if (!adminId) throw new UnauthorizedException('Invalid token');
 
-    const currentUser = await this.usersService.findById(String(userId));
+    const currentUser = await this.usersService.findById(String(adminId));
     if (!currentUser || currentUser.role !== 'ADMIN') {
       throw new ForbiddenException(
         'Access denied. Only Global Admins can update roles.',
       );
     }
 
-    return this.usersService.updateRole(targetId, role);
+    return this.usersService.updateRole(targetId, role, String(adminId));
   }
 
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(@Req() req: RequestWithUser, @Param('id') targetId: string) {
-    const userId = req.user?.id || req.user?.sub;
-    if (!userId) {
-      throw new UnauthorizedException('Invalid token payload');
-    }
+    const adminId = req.user?.id || req.user?.sub;
+    if (!adminId) throw new UnauthorizedException('Invalid token');
 
-    const currentUser = await this.usersService.findById(String(userId));
+    const currentUser = await this.usersService.findById(String(adminId));
     if (!currentUser || currentUser.role !== 'ADMIN') {
       throw new ForbiddenException(
         'Access denied. Only Global Admins can delete users.',
       );
     }
 
-    if (String(userId) === targetId) {
+    if (String(adminId) === targetId) {
       throw new ForbiddenException('You cannot delete your own admin account.');
     }
 
@@ -93,6 +103,6 @@ export class UsersController {
       );
     }
 
-    return this.usersService.remove(targetId);
+    return this.usersService.remove(targetId, String(adminId));
   }
 }

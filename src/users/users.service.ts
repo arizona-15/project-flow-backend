@@ -22,37 +22,59 @@ export class UsersService {
         role: true,
       },
       orderBy: {
-        name: 'desc',
+        name: 'asc',
       },
     });
   }
 
-  async updateRole(id: string, role: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+  async updateRole(targetId: string, role: string, adminId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: targetId } });
     if (!user) throw new NotFoundException('User not found');
 
-    return this.prisma.user.update({
-      where: { id },
+    const updatedUser = await this.prisma.user.update({
+      where: { id: targetId },
+      data: { role: role.toUpperCase() as Role },
+      select: { id: true, name: true, role: true, email: true },
+    });
+
+    await this.prisma.activityLog.create({
       data: {
-        role: role.toUpperCase() as Role,
-      },
-      select: {
-        id: true,
-        name: true,
-        role: true,
+        userId: adminId,
+        action: 'UPDATE_ROLE',
+        details: `Changed role of ${updatedUser.name} (${updatedUser.email}) to ${updatedUser.role}`,
       },
     });
+
+    return updatedUser;
   }
 
-  async remove(id: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+  async remove(targetId: string, adminId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: targetId } });
     if (!user) throw new NotFoundException('User not found');
 
-    return this.prisma.user.delete({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
+    const deletedUser = await this.prisma.user.delete({
+      where: { id: targetId },
+      select: { id: true, name: true, email: true },
+    });
+
+    await this.prisma.activityLog.create({
+      data: {
+        userId: adminId,
+        action: 'DELETE_USER',
+        details: `Permanently deleted user: ${deletedUser.name} (${deletedUser.email})`,
+      },
+    });
+
+    return deletedUser;
+  }
+
+  async getSystemLogs() {
+    return this.prisma.activityLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: {
+        user: { select: { name: true, email: true, role: true } },
+        board: { select: { title: true } },
       },
     });
   }

@@ -63,10 +63,7 @@ export class BoardsController {
   }
 
   @Post()
-  create(
-    @Body() createBoardDto: CreateBoardDto,
-    @Req() req: RequestWithUser,
-  ) {
+  create(@Body() createBoardDto: CreateBoardDto, @Req() req: RequestWithUser) {
     return this.boardsService.create(createBoardDto, req.user.id);
   }
 

@@ -69,13 +69,14 @@ model TaskAssignee {
 
 model ActivityLog {
   id        String   @id @default(uuid())
-  boardId   String
+  boardId   String?
   userId    String
   action    String
+  details   String?
   createdAt DateTime @default(now())
 
-  board Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board Board? @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // ... Enum untuk Role dan Priority
